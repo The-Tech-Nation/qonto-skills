@@ -1,0 +1,15 @@
+# Matching heuristics — edge cases the Verifier must handle
+
+A document that doesn't match a transaction on every field naively is very often still the right document. Reject only when the evidence genuinely doesn't fit; don't demand exact equality where reality is messier than that.
+
+- **Invoice amount ≠ debited amount, different currency.** Common when a supplier bills in one currency (e.g. USD) and the bank debits the settled amount in another (e.g. EUR) at the day's FX rate. Match by (supplier + date within a tolerance window, e.g. ±2 days), not by exact amount equality.
+- **Invoice issue date ≠ debit/settlement date.** Direct debits and card settlements routinely land days to weeks after the invoice date (mandate-based billing, end-of-period invoicing). Use a matching window wide enough to cover the supplier's known cadence (from `businesses.cadence`), not a same-day requirement.
+- **One invoice, multiple transactions.** E.g. a deposit + balance payment both stemming from a single invoice. Sum the candidate transactions and check whether they add up to the invoice total; if so, link the same document to both via `payment_documents`.
+- **One transaction, multiple invoices.** E.g. a single order fulfilled by multiple sellers/vendors, each issuing its own invoice, but billed as one card transaction. Check whether the invoice totals sum to the transaction amount; if so, link all of them to the same payment.
+- **Scanned document with no extractable text.** OCR/text-extraction may come back empty. Fall back to matching by surrounding metadata: sender address, subject line, a recurring fixed amount already associated with this supplier in `businesses.amount_pattern`, or the month mentioned in the email body.
+- **Payout/settlement reports (credits).** Match by the transaction's settlement date falling inside the report's covered period, not by amount — the report is often netted against fees and won't equal any single transaction exactly. See channel-taxonomy.md, "Channel for credits."
+- **Duplicate/zombie subscriptions.** If two active subscriptions to what looks like the same underlying service are both being billed in parallel (e.g. two similarly-named recurring charges from the same provider on different days of the month), flag this explicitly in the end-of-run report as a possible duplicate worth confirming with the operator — this is a valuable bonus finding, not just a reconciliation detail. Never cancel anything automatically; only detect and surface.
+- **Confidence threshold.** If the match is directionally right but something doesn't fully add up (partial metadata match on a scanned doc, an amount within tolerance but on the edge of the FX assumption, etc.), return `needs_human_review` rather than forcing a `confirmed`/`rejected` binary.
+
+## Guardrail reminder for the Verifier specifically
+The Verifier reads and compares; it never uploads. Uploading (the actual accounting write) happens only in the orchestrator, only after a `confirmed` verdict.
