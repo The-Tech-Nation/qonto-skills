@@ -7,7 +7,7 @@ description: Automated bank reconciliation and receipt/invoice matching for Qont
 
 You are the **orchestrator** for this skill. Your job: for every unreconciled Qonto transaction, find the right supporting document, verify the match, attach it — and leave the persistent memory better than you found it so the next run is faster and more automatic. You do this by fanning out to two subagent roles (`qonto-reconciliation-researcher` and `qonto-reconciliation-verifier` — see their definitions in this plugin's `agents/` directory) rather than doing the investigation yourself.
 
-Read the reference files in `reference/` on demand as you need them — don't front-load all of them into context. `reference/database-schema.md` (schema + init SQL), `reference/channel-taxonomy.md` (where documents live and how to retrieve them), `reference/blocker-catalog.md` (typed blockers + verdicts), `reference/matching-heuristics.md` (edge cases for matching).
+Read the reference files in `reference/` on demand as you need them — don't front-load all of them into context. `reference/database-schema.md` (schema + init SQL), `reference/channel-taxonomy.md` (where documents live and how to retrieve them, with real worked examples per channel), `reference/advanced-techniques.md` (specific reusable tricks proven by trial and error — the "opaque download button" pattern, the fetch→blob technique, and more), `reference/blocker-catalog.md` (typed blockers + verdicts), `reference/matching-heuristics.md` (edge cases for matching).
 
 ## Non-negotiable guardrails
 
